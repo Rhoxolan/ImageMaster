@@ -90,7 +90,9 @@ namespace ImageMaster.Controllers
 				using var image = Image.Load(imageEntity.Path);
 
 				//Another variant with image return
-				//return PhysicalFile(imageEntity.Path, image.Metadata.DecodedImageFormat?.DefaultMimeType ?? "img/*");
+				//
+				//	return PhysicalFile(imageEntity.Path, image.Metadata.DecodedImageFormat?.DefaultMimeType ?? "img/*");
+				//
 				return Ok(new { url = GetImageUrl(imageEntity.Id) });
 			}
 			catch (InvalidImageContentException)
@@ -105,6 +107,29 @@ namespace ImageMaster.Controllers
 			{
 				return Problem("Data processing error. Please contact to developer");
 			}
+		}
+
+		[HttpGet("get-url/{id}/size/{size:regex(^(100|300)$)}")]
+		public async Task<IActionResult> GetUrlThumbnail(int id, int size)
+		{
+			//Another variant with manual check
+			//if (size != 100 && size != 300)
+			//{
+			//	return BadRequest("The size for image thumbnail is not valid");
+			//}
+			try
+			{
+				var imageEntity = await _context.ImageEntities.FindAsync(id);
+				if (imageEntity == null)
+				{
+					return NotFound();
+				}
+			}
+			catch
+			{
+
+			}
+			return Ok();
 		}
 
 		private string GetImageUrl(int id)
