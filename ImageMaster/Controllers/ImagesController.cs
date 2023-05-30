@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
+using SixLabors.ImageSharp;
+using System;
 
 namespace ImageMaster.Controllers
 {
@@ -22,6 +24,46 @@ namespace ImageMaster.Controllers
 
 		[HttpPost("upload-by-url")]
 		public async Task<IActionResult> UploadByUrl(ImageDTO imageDTO)
+		{
+			try
+			{
+				var imageUrl = new Uri(imageDTO.Url);
+				using var httpClient = new HttpClient(); //Узнать
+				byte[] imageBytes = await httpClient.GetByteArrayAsync(imageUrl);
+				if (imageBytes.Length > (5 * 1024 * 1024))
+				{
+					return BadRequest("Length");
+				}
+				var format = Image.DetectFormat(imageBytes);
+				if (format == null)
+				{
+					return BadRequest("Format");
+				}
+				using var image = Image.Load(imageBytes);
+				string imageDirectory = GetNewImageDirectoryName();
+				if (!Directory.Exists(imageDirectory))
+				{
+					Directory.CreateDirectory(imageDirectory);
+				}
+				string imageName = Guid.NewGuid().ToString() + "." + format.Name;
+				string imagePath = Path.Combine(imageDirectory, imageName);
+				image.Save(imagePath);
+				ImageEntity imageEntity = new ImageEntity
+				{
+					Path = imagePath
+				};
+				_context.ImageEntities.Add(imageEntity);
+				await _context.SaveChangesAsync();
+				return Ok(new { url = GetImageUrl(imageEntity.Id) });
+			}
+			catch
+			{
+				return BadRequest("Other");
+			}
+		}
+
+		[HttpPost("upload-by-url-old")]
+		public async Task<IActionResult> UploadByUrlOld(ImageDTO imageDTO)
 		{
 			try
 			{
@@ -45,9 +87,8 @@ namespace ImageMaster.Controllers
 									// Генерация уникального имени файла
 									string imageName = Guid.NewGuid().ToString();
 
-									// Создание директорий
-									string imageDirectory = Path.Combine(Directory.GetCurrentDirectory(), "Photos",
-										imageName.Substring(0, 2), imageName.Substring(2, 2));
+
+									string imageDirectory = GetNewImageDirectoryName();
 									if (!Directory.Exists(imageDirectory))
 									{
 										Directory.CreateDirectory(imageDirectory);
@@ -57,7 +98,6 @@ namespace ImageMaster.Controllers
 									string imagePath = Path.Combine(imageDirectory, imageName + ".jpg");
 									await System.IO.File.WriteAllBytesAsync(imagePath, imageBytes);
 
-									// Сохранение пути к изображению в базу данных
 									ImageEntity imageEntity = new ImageEntity
 									{
 										Path = imagePath
@@ -98,6 +138,19 @@ namespace ImageMaster.Controllers
 		private string GetImageUrl(int id)
 		{
 			return $"{Request.Scheme}://{Request.Host}/api/images/get-url/{id}";
+		}
+
+		private string GetNewImageDirectoryName()
+		{
+			return Path.Combine(Directory.GetCurrentDirectory(), "Images",
+				$"{GetRandomLetter()}{GetRandomLetter()}", $"{GetRandomLetter()}{GetRandomLetter()}");
+		}
+
+		private string GetRandomLetter()
+		{
+			const string letters = "qwertyuiopasdfghjklzxcvbnm";
+			var rand = new Random();
+			return letters[rand.Next(letters.Length)].ToString();
 		}
 	}
 }
