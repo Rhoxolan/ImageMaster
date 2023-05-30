@@ -16,6 +16,7 @@ namespace ImageMaster.Controllers
 	public class ImagesController : ControllerBase
 	{
 		private readonly ImagesContext _context;
+		private static readonly object _lock = new();
 
 		public ImagesController(ImagesContext context)
 		{
@@ -27,27 +28,27 @@ namespace ImageMaster.Controllers
 		{
 			try
 			{
-				var imageUrl = new Uri(imageDTO.Url);
+				if (!Uri.IsWellFormedUriString(imageDTO.Url, UriKind.Absolute))
+				{
+					return BadRequest("URI");
+				}
+				var imageUri = new Uri(imageDTO.Url);
 				using var httpClient = new HttpClient(); //Узнать
-				byte[] imageBytes = await httpClient.GetByteArrayAsync(imageUrl);
+				byte[] imageBytes = await httpClient.GetByteArrayAsync(imageUri);
 				if (imageBytes.Length > (5 * 1024 * 1024))
 				{
 					return BadRequest("Length");
 				}
 				var format = Image.DetectFormat(imageBytes);
-				if (format == null)
-				{
-					return BadRequest("Format");
-				}
 				using var image = Image.Load(imageBytes);
 				string imageDirectory = GetNewImageDirectoryName();
-				if (!Directory.Exists(imageDirectory))
+				string imageName = $"{Guid.NewGuid()}.{format.Name}";
+				string imagePath = Path.Combine(imageDirectory, imageName);
+				lock (_lock)
 				{
 					Directory.CreateDirectory(imageDirectory);
+					image.Save(imagePath);
 				}
-				string imageName = Guid.NewGuid().ToString() + "." + format.Name;
-				string imagePath = Path.Combine(imageDirectory, imageName);
-				image.Save(imagePath);
 				ImageEntity imageEntity = new ImageEntity
 				{
 					Path = imagePath
@@ -56,69 +57,13 @@ namespace ImageMaster.Controllers
 				await _context.SaveChangesAsync();
 				return Ok(new { url = GetImageUrl(imageEntity.Id) });
 			}
+			catch (UnknownImageFormatException)
+			{
+				return BadRequest("The image format error");
+			}
 			catch
 			{
 				return BadRequest("Other");
-			}
-		}
-
-		[HttpPost("upload-by-url-old")]
-		public async Task<IActionResult> UploadByUrlOld(ImageDTO imageDTO)
-		{
-			try
-			{
-				Uri imageUrl = new Uri(imageDTO.Url);
-
-				// Загрузка изображения из URL
-				using (var httpClient = new System.Net.Http.HttpClient())
-				{
-					using (var httpResponse = await httpClient.GetAsync(imageUrl))
-					{
-						if (httpResponse.IsSuccessStatusCode)
-						{
-							using (var stream = await httpResponse.Content.ReadAsStreamAsync())
-							{
-								// Чтение изображения в массив байтов
-								using (var memoryStream = new MemoryStream())
-								{
-									await stream.CopyToAsync(memoryStream);
-									byte[] imageBytes = memoryStream.ToArray();
-
-									// Генерация уникального имени файла
-									string imageName = Guid.NewGuid().ToString();
-
-
-									string imageDirectory = GetNewImageDirectoryName();
-									if (!Directory.Exists(imageDirectory))
-									{
-										Directory.CreateDirectory(imageDirectory);
-									}
-
-									// Сохранение изображения в файл
-									string imagePath = Path.Combine(imageDirectory, imageName + ".jpg");
-									await System.IO.File.WriteAllBytesAsync(imagePath, imageBytes);
-
-									ImageEntity imageEntity = new ImageEntity
-									{
-										Path = imagePath
-									};
-									_context.ImageEntities.Add(imageEntity);
-									await _context.SaveChangesAsync();
-
-									return Ok(new { url = GetImageUrl(imageEntity.Id) });
-								}
-							}
-						}
-						else
-						{
-							return BadRequest("Failed to download image from the specified URL.");
-						}
-					}
-				}
-			}
-			catch (Exception ex)
-			{
-				return BadRequest(ex.Message);
 			}
 		}
 
