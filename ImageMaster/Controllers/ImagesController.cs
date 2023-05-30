@@ -7,7 +7,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Advanced;
 using System;
+using System.IO;
+using System.Text.Unicode;
 
 namespace ImageMaster.Controllers
 {
@@ -77,14 +80,31 @@ namespace ImageMaster.Controllers
 		[HttpGet("get-url/{id}")]
 		public async Task<IActionResult> GetUrl(int id)
 		{
-			var imageEntity = await _context.ImageEntities.FindAsync(id);
-
-			if (imageEntity == null)
+			try
 			{
-				return NotFound();
-			}
+				var imageEntity = await _context.ImageEntities.FindAsync(id);
+				if (imageEntity == null)
+				{
+					return NotFound();
+				}
+				using var image = Image.Load(imageEntity.Path);
 
-			return Ok(new { url = GetImageUrl(imageEntity.Id) });
+				//Another variant with image return
+				//return PhysicalFile(imageEntity.Path, image.Metadata.DecodedImageFormat?.DefaultMimeType ?? "img/*");
+				return Ok(new { url = GetImageUrl(imageEntity.Id) });
+			}
+			catch (InvalidImageContentException)
+			{
+				return Problem("The image has problems. Please contact to developer");
+			}
+			catch (UnknownImageFormatException)
+			{
+				return Problem("Problems with the image format. Please contact to developer");
+			}
+			catch
+			{
+				return Problem("Data processing error. Please contact to developer");
+			}
 		}
 
 		private string GetImageUrl(int id)
