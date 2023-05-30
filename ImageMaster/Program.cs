@@ -5,9 +5,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<ImagesContext>(opt
 	=> opt.UseSqlServer(builder.Configuration.GetConnectionString("ImagesDB")));
+
 builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+
+builder.Services.AddEndpointsApiExplorer()
+	.AddHttpClient()
+	.AddSwaggerGen();
 
 var app = builder.Build();
 

@@ -16,11 +16,13 @@ namespace ImageMaster.Controllers
 	public class ImagesController : ControllerBase
 	{
 		private readonly ImagesContext _context;
+		private IHttpClientFactory _clientFactory;
 		private static readonly object _lock = new();
 
-		public ImagesController(ImagesContext context)
+		public ImagesController(ImagesContext context, IHttpClientFactory clientFactory)
 		{
 			_context = context;
+			_clientFactory = clientFactory;
 		}
 
 		[HttpPost("upload-by-url")]
@@ -30,14 +32,17 @@ namespace ImageMaster.Controllers
 			{
 				if (!Uri.IsWellFormedUriString(imageDTO.Url, UriKind.Absolute))
 				{
-					return BadRequest("URI");
+					//Return code 400 because the request isn`t valid
+					return BadRequest("Wrong URI");
 				}
 				var imageUri = new Uri(imageDTO.Url);
-				using var httpClient = new HttpClient(); //Узнать
-				byte[] imageBytes = await httpClient.GetByteArrayAsync(imageUri);
+				var _httpClient = _clientFactory.CreateClient();
+				byte[] imageBytes = await _httpClient.GetByteArrayAsync(imageUri);
 				if (imageBytes.Length > (5 * 1024 * 1024))
 				{
-					return BadRequest("Length");
+					//Return code 422 because the request is valid but the
+					//server cannot process it because the image is too large
+					return UnprocessableEntity("The size of the image is bigger than 5MB");
 				}
 				var format = Image.DetectFormat(imageBytes);
 				using var image = Image.Load(imageBytes);
@@ -59,11 +64,13 @@ namespace ImageMaster.Controllers
 			}
 			catch (UnknownImageFormatException)
 			{
-				return BadRequest("The image format error");
+				//Return code 422 because the request is valid but the content type is not valid
+				return UnprocessableEntity("The image format error");
 			}
 			catch
 			{
-				return BadRequest("Other");
+				//Return code 400 because an error occurred while processing the data.
+				return BadRequest("Data processing error. Please contact to developer");
 			}
 		}
 
