@@ -1,16 +1,10 @@
-﻿using Azure.Core;
-using ImageMaster.Data.Contexts;
+﻿using ImageMaster.Data.Contexts;
 using ImageMaster.Data.Entities;
 using ImageMaster.DTOs.ImagesDTOs;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Hosting;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Advanced;
-using System;
-using System.IO;
-using System.Text.Unicode;
 
 namespace ImageMaster.Controllers
 {
@@ -48,9 +42,9 @@ namespace ImageMaster.Controllers
 					return UnprocessableEntity("The size of the image is bigger than 5MB");
 				}
 				var format = Image.DetectFormat(imageBytes);
-				using var image = Image.Load(imageBytes);
+				using Image image = Image.Load(imageBytes);
 				string imageDirectory = GetNewImageDirectoryName();
-				string imageName = $"{Guid.NewGuid()}.{format.Name}";
+				string imageName = $"{Guid.NewGuid()}.{format.Name.ToLower()}";
 				string imagePath = Path.Combine(imageDirectory, imageName);
 				lock (_lock)
 				{
@@ -87,7 +81,7 @@ namespace ImageMaster.Controllers
 				{
 					return NotFound();
 				}
-				using var image = Image.Load(imageEntity.Path);
+				using Image image = Image.Load(imageEntity.Path);
 
 				//Another variant with image return
 				//
@@ -124,12 +118,62 @@ namespace ImageMaster.Controllers
 				{
 					return NotFound();
 				}
+				string? folderPath = Path.GetDirectoryName(imageEntity.Path);
+				if (folderPath == null)
+				{
+					return Problem("Data processing error. Please contact to developer");
+				}
+				string? mainFileNameWithoutExtension = Path.GetFileNameWithoutExtension(imageEntity.Path);
+				if (mainFileNameWithoutExtension == null)
+				{
+					return Problem("Data processing error. Please contact to developer");
+				}
+				string? mainFileNameExtension = Path.GetExtension(imageEntity.Path).ToLower();
+				if (mainFileNameExtension == null)
+				{
+					return Problem("Data processing error. Please contact to developer");
+				}
+				string thumbnailFilePath = Path.Combine(folderPath, $"{mainFileNameWithoutExtension}-{size}{mainFileNameExtension}");
+				if (!System.IO.File.Exists(thumbnailFilePath))
+				{
+					using Image image = Image.Load(imageEntity.Path);
+					using Image imageThumbnail = image.Clone(i => i.Resize(size, size));
+					lock (_lock)
+					{
+						imageThumbnail.Save(thumbnailFilePath);
+					}
+
+					//Another variant with image return
+					//
+					//	return PhysicalFile(thumbnailFilePath, imageThumbnail.Metadata.DecodedImageFormat?.DefaultMimeType ?? "img/*");
+					//
+					return Ok(new { url = GetThumbnailImageUrl(imageEntity.Id, size) });
+				}
+				using Image imageThumbnailed = Image.Load(thumbnailFilePath);
+
+				//Another variant with image return
+				//
+				//	return PhysicalFile(thumbnailFilePath, imageThumbnailed.Metadata.DecodedImageFormat?.DefaultMimeType ?? "img/*");
+				//
+				return Ok(new { url = GetThumbnailImageUrl(imageEntity.Id, size) });
+			}
+			catch (InvalidImageContentException)
+			{
+				return Problem("The image has problems. Please contact to developer");
+			}
+			catch (UnknownImageFormatException)
+			{
+				return Problem("Problems with the image format. Please contact to developer");
 			}
 			catch
 			{
-
+				return Problem("Data processing error. Please contact to developer");
 			}
-			return Ok();
+		}
+
+		private string GetThumbnailImageUrl(int id, int size)
+		{
+			return $"{Request.Scheme}://{Request.Host}/api/images/get-url/{id}/size/{size}";
 		}
 
 		private string GetImageUrl(int id)
