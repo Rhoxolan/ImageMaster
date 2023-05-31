@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Advanced;
+using System.Drawing;
 
 namespace ImageMaster.Controllers
 {
@@ -161,6 +162,40 @@ namespace ImageMaster.Controllers
 			{
 				return Problem("Data processing error. Please contact to developer");
 			}
+		}
+
+		[HttpDelete("remove/{id}")]
+		public async Task<IActionResult> Remove(int id)
+		{
+			var imageEntity = await _context.ImageEntities.FindAsync(id);
+			if (imageEntity == null)
+			{
+				return NotFound();
+			}
+			string folderPath = Path.GetDirectoryName(imageEntity.Path)!;
+			string mainFileNameWithoutExtension = Path.GetFileNameWithoutExtension(imageEntity.Path)!;
+			string mainFileNameExtension = Path.GetExtension(imageEntity.Path)!.ToLower();
+			string thumbnail100FilePath = Path.Combine(folderPath, $"{mainFileNameWithoutExtension}-100{mainFileNameExtension}");
+			string thumbnail300FilePath = Path.Combine(folderPath, $"{mainFileNameWithoutExtension}-300{mainFileNameExtension}");
+			if(!System.IO.File.Exists(imageEntity.Path))
+			{
+				return Problem("Data processing error. Please contact to developer");
+			}
+			lock (_lock)
+			{
+				System.IO.File.Delete(imageEntity.Path);
+				if (System.IO.File.Exists(thumbnail100FilePath))
+				{
+					System.IO.File.Delete(thumbnail100FilePath);
+				}
+				if (System.IO.File.Exists(thumbnail300FilePath))
+				{
+					System.IO.File.Delete(thumbnail300FilePath);
+				}
+			}
+			_context.ImageEntities.Remove(imageEntity);
+			await _context.SaveChangesAsync();
+			return Ok();
 		}
 
 		private string GetThumbnailImageUrl(int id, int size)
