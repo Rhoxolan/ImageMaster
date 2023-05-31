@@ -118,21 +118,13 @@ namespace ImageMaster.Controllers
 				{
 					return NotFound();
 				}
-				string? folderPath = Path.GetDirectoryName(imageEntity.Path);
-				if (folderPath == null)
+				if (!System.IO.File.Exists(imageEntity.Path))
 				{
 					return Problem("Data processing error. Please contact to developer");
 				}
-				string? mainFileNameWithoutExtension = Path.GetFileNameWithoutExtension(imageEntity.Path);
-				if (mainFileNameWithoutExtension == null)
-				{
-					return Problem("Data processing error. Please contact to developer");
-				}
-				string? mainFileNameExtension = Path.GetExtension(imageEntity.Path).ToLower();
-				if (mainFileNameExtension == null)
-				{
-					return Problem("Data processing error. Please contact to developer");
-				}
+				string folderPath = Path.GetDirectoryName(imageEntity.Path)!;
+				string mainFileNameWithoutExtension = Path.GetFileNameWithoutExtension(imageEntity.Path)!;
+				string mainFileNameExtension = Path.GetExtension(imageEntity.Path)!.ToLower();
 				string thumbnailFilePath = Path.Combine(folderPath, $"{mainFileNameWithoutExtension}-{size}{mainFileNameExtension}");
 				if (!System.IO.File.Exists(thumbnailFilePath))
 				{
