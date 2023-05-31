@@ -1,0 +1,256 @@
+{
+	"info": {
+		"_postman_id": "91e99cda-53a7-43a0-adde-2ff99482d9ee",
+		"name": "ImageMasterTest",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Upload_the_first_image",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "default"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"url\": \"https://raw.githubusercontent.com/Rhoxolan/HTML5-CSS3_Course/main/2022.11.07_PW/SendMessage_screenshot.png\"\r\n}"
+				},
+				"url": {
+					"raw": "https://localhost:7120/api/Images/upload-by-url",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "7120",
+					"path": [
+						"api",
+						"Images",
+						"upload-by-url"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Upload_the_second_image",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "default"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"url\": \"https://raw.githubusercontent.com/Rhoxolan/Structured_Cabling_Studio/main/Mockups/_Layout_Mockup.drawio.png\"\r\n}"
+				},
+				"url": {
+					"raw": "https://localhost:7120/api/Images/upload-by-url",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "7120",
+					"path": [
+						"api",
+						"Images",
+						"upload-by-url"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Upload_the_third_image",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "default"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"url\": \"https://raw.githubusercontent.com/Rhoxolan/SCS-Calc_2.0/master/Diagrams/ClassDiagram.drawio.png\"\r\n}"
+				},
+				"url": {
+					"raw": "https://localhost:7120/api/Images/upload-by-url",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "7120",
+					"path": [
+						"api",
+						"Images",
+						"upload-by-url"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Upload_the_fourth_image",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "default"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"url\": \"https://raw.githubusercontent.com/Rhoxolan/UML-Design_Patterns_Course/main/2022.11.09_PW/SCS-Calc_2_0_UseCase_Diagram.drawio.png\"\r\n}"
+				},
+				"url": {
+					"raw": "https://localhost:7120/api/Images/upload-by-url",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "7120",
+					"path": [
+						"api",
+						"Images",
+						"upload-by-url"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Upload_the_fifth_image",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "default"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"url\": \"https://raw.githubusercontent.com/Rhoxolan/SCS-Calc_2.0/master/SCS-Calc%202.0/SplashScreen.png\"\r\n}"
+				},
+				"url": {
+					"raw": "https://localhost:7120/api/Images/upload-by-url",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "7120",
+					"path": [
+						"api",
+						"Images",
+						"upload-by-url"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get_the_image",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:7120/api/Images/get-url/1",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "7120",
+					"path": [
+						"api",
+						"Images",
+						"get-url",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get_the_first_thumbnail_image",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:7120/api/Images/get-url/2/size/100",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "7120",
+					"path": [
+						"api",
+						"Images",
+						"get-url",
+						"2",
+						"size",
+						"100"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get_the_second_thumbnail_image",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:7120/api/Images/get-url/3/size/300",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "7120",
+					"path": [
+						"api",
+						"Images",
+						"get-url",
+						"3",
+						"size",
+						"300"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete_the_image",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:7120/api/Images/remove/2",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "7120",
+					"path": [
+						"api",
+						"Images",
+						"remove",
+						"2"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
